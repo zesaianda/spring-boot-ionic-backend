@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import com.nelioalves.cursomc.domain.ItemPedido;
 import com.nelioalves.cursomc.domain.PagamentoComBoleto;
 import com.nelioalves.cursomc.domain.Pedido;
-import com.nelioalves.cursomc.domain.Produto;
 import com.nelioalves.cursomc.domain.enums.EstadoPagamento;
+import com.nelioalves.cursomc.repositories.ClienteRepository;
 import com.nelioalves.cursomc.repositories.ItemPedidoRepository;
 import com.nelioalves.cursomc.repositories.PagamentoRepository;
 import com.nelioalves.cursomc.repositories.PedidoRepository;
@@ -34,6 +34,9 @@ public class PedidoService {
 	
 	@Autowired
 	private ItemPedidoRepository itemPedidoRepository;
+	
+	@Autowired
+	private ClienteRepository clienteRepository;
 
 	public Pedido find(Integer id) {
 		Optional<Pedido> obj = repo.findById(id);
@@ -46,6 +49,7 @@ public class PedidoService {
 		// TODO Auto-generated method stub
 		obj.setId(null);
 		obj.setInstante(new Date());
+		obj.setCliente(clienteRepository.getOne(obj.getCliente().getId()));
 		obj.getPagamento().setEstado(EstadoPagamento.PENDENTE);
 		obj.getPagamento().setPedido(obj);
 		if(obj.getPagamento() instanceof PagamentoComBoleto) {
@@ -56,11 +60,12 @@ public class PedidoService {
 		pagamentoRepository.save(obj.getPagamento());
 		for(ItemPedido ip : obj.getItens()) {
 			ip.setDesconto(0.0);
-			Optional<Produto> prod = produtoRepository.findById(ip.getProduto().getId());
-			ip.setPreco(prod.get().getPreco());
+			ip.setProduto(produtoRepository.getOne(ip.getProduto().getId()));
+			ip.setPreco(ip.getProduto().getPreco());
 			ip.setPedido(obj);
 		}
 		itemPedidoRepository.saveAll(obj.getItens());
+		System.out.println(obj);
 		return obj;
 	}
 }
