@@ -3,7 +3,6 @@ package com.nelioalves.cursomc.services;
 import java.util.List;
 import java.util.Optional;
 
-import org.hibernate.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -25,6 +24,7 @@ import com.nelioalves.cursomc.repositories.EnderecoRepository;
 import com.nelioalves.cursomc.security.UserSS;
 import com.nelioalves.cursomc.services.exceptions.AuthorizationException;
 import com.nelioalves.cursomc.services.exceptions.DataIntegrityException;
+import com.nelioalves.cursomc.services.exceptions.ObjectNotFoundException;
 
 @Service
 public class ClienteService {
@@ -83,6 +83,22 @@ public class ClienteService {
 	public List<Cliente> findAll() {
 		// TODO Auto-generated method stub
 		return repo.findAll();
+	}
+	
+	
+	public Cliente findByEmail(String email) {
+		UserSS user = UserService.authenticated();
+		if(user == null || user.hasRole(Perfil.ADMIN) && !email.equals(user.getUsername())) {
+			throw new AuthorizationException("Acesso negado");
+		}
+		
+		Cliente obj = repo.findByEmail(email);
+		if(obj == null) {
+			throw new ObjectNotFoundException("Objecto não encontrado! Id: " + user.getId()
+			+ " , Tipo: " + Cliente.class.getName());
+		}
+		
+		return obj;
 	}
 	
 	
